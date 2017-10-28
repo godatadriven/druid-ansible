@@ -1,0 +1,70 @@
+- name: Download druid
+  # Always call it druid-{{ druid_version }}-bin.tar.gz no matter if it is the real dist file or a gitlab artifact (in zip)
+  # the unarchive module handles it nicely
+  get_url: url={{ druid_download_url }}  dest=/tmp/druid-{{ druid_version }}-bin.tar.gz force=no
+
+- name: Create druid group
+  group:
+    name: "{{ druid_run_user }}"
+    state: present
+
+- name: Create druid user with group
+  user:
+    name: "{{ druid_run_user }}"
+    comment: "Druid run user"
+    group: "{{ druid_run_user }}"
+
+- name: ensure druid used directories exists
+  file: path={{ item }} state=directory owner=druid group=druid mode=0775
+  with_items:
+    - "{{ druid_base_dir }}"
+    - /var/log/druid
+    - "{{ segment_cache_location }}"
+    - "{{ druid_indexer_task_baseDir }}"
+    - "{{ druid_indexer_task_hadoopWorkingPath }}"
+
+- name: unarchive druid
+  unarchive: src="/tmp/druid-{{ druid_version }}-bin.tar.gz" dest={{ druid_base_dir }} copy=no owner=druid group=druid
+
+- name: Create symlink to druid version dir
+  file: src="{{ druid_base_dir }}/druid-{{ druid_version }}" dest={{ druid_base_dir }}/druid state=link owner=druid group=druid mode=0775
+
+- name: ensure druid config directories exists
+  file: path={{ druid_conf_dir }}/{{ item }} state=directory owner=druid group=druid mode=0775
+  with_items:
+    - _common
+    - broker
+    - coordinator
+    - coordinator_parts
+    - historical
+    - indexing
+
+- name: copy over common runtime.properties
+  template: src=_common/common.runtime.properties dest={{ druid_conf_dir }}/_common/common.runtime.properties owner=druid group=druid mode=0664
+
+- name: copy over common logging config
+  template: src=_common/log4j2.xml dest={{ druid_conf_dir }}/_common/log4j2.xml owner=druid group=druid mode=0664
+
+- name: copy over other runtime.properties
+  template: src={{ item }}/runtime.properties dest={{ druid_conf_dir }}/{{ item }}/runtime.properties owner=druid group=druid mode=0664
+  with_items:
+    - broker
+    - historical
+    - coordinator_parts
+    - indexing
+
+- name: copy over extra coordinator runtime.properties
+  template: src={{ item }}/runtime.properties dest={{ druid_conf_dir }}/coordinator_parts/{{ item }}.runtime.properties owner=druid group=druid mode=0664
+  with_items:
+    - indexing
+
+- name: Merge coordinator runtime properties parts
+  assemble:
+    src: "{{ druid_conf_dir }}/coordinator_parts"
+    dest: "{{ druid_conf_dir }}/coordinator/runtime.properties"
+    owner: druid
+    group: druid
+    mode: 0664
+
+- name: Get postgres jdbc driver for druid
+  get_url: url={{ druid_db_jdbc_download_url }} dest={{ druid_base_dir }}/druid/lib force=true owner=druid group=druid mode=0664

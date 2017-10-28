@@ -1,0 +1,8 @@
+---
+zookeeper_conf_dir: "/etc/zookeeper/conf"
+zookeeper_data_dir: "/var/lib/zookeeper"
+zookeeper_max_client_connections: 50
+zookeeper_tick_time: 2000
+zookeeper_initial_limit: 100
+zookeeper_sync_limit: 5
+zookeeper_server_jvmflags: ""

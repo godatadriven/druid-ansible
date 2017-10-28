@@ -1,0 +1,173 @@
+---
+- name: Create container node instance(s) in Zone A
+  when: node_count_zone_a is defined
+  local_action:
+    module: ec2
+    key_name: "{{ key_name }}"
+    instance_type: "{{ instance_type }}"
+    image: "{{ ami }}"
+    region: "{{ region }}"
+    vpc_subnet_id: "{{ subnet_id_a }}"
+    volumes: "{{ node_volumes }}"
+    wait: no
+    monitoring: no
+    assign_public_ip: yes
+    group_id: 
+      - "{{ outboundtraffic_group.group_id }}"
+      - "{{ druid_cluster_group.group_id }}"
+      - "{{ druid_cluster_internode_group.group_id }}"
+    instance_tags:
+      Name: "druid-cluster-node"
+    count_tag:
+      Name: "druid-cluster-node"
+    exact_count: "{{ node_count_zone_a }}"
+  register: container_nodes_zonea
+
+- name: Create container node instance(s) in Zone B
+  when: node_count_zone_b is defined
+  local_action:
+    module: ec2
+    key_name: "{{ key_name }}"
+    instance_type: "{{ instance_type }}"
+    image: "{{ ami }}"
+    region: "{{ region }}"
+    vpc_subnet_id: "{{ subnet_id_b }}"
+    volumes: "{{ node_volumes }}"
+    wait: no
+    monitoring: no
+    assign_public_ip: yes
+    group_id: 
+      - "{{ outboundtraffic_group.group_id }}"
+      - "{{ druid_cluster_group.group_id }}"
+      - "{{ druid_cluster_internode_group.group_id }}"
+    instance_tags:
+      Name: "druid-cluster-node"
+    count_tag:
+      Name: "druid-cluster-node"
+    exact_count: "{{ node_count_zone_b }}"
+  register: container_nodes_zoneb
+
+- name: Create container node instance(s) in Zone C
+  when: node_count_zone_c is defined
+  local_action:
+    module: ec2
+    key_name: "{{ key_name }}"
+    instance_type: "{{ instance_type }}"
+    image: "{{ ami }}"
+    region: "{{ region }}"
+    vpc_subnet_id: "{{ subnet_id_c }}"
+    volumes: "{{ node_volumes }}"
+    wait: no
+    monitoring: no
+    assign_public_ip: yes
+    group_id: 
+      - "{{ outboundtraffic_group.group_id }}"
+      - "{{ druid_cluster_group.group_id }}"
+      - "{{ druid_cluster_internode_group.group_id }}"
+    instance_tags:
+      Name: "druid-cluster-node"
+    count_tag:
+      Name: "druid-cluster-node"
+    exact_count: "{{ node_count_zone_c }}"
+  register: container_nodes_zonec
+
+- name: Set container variables
+  set_fact:
+    containers_zonea: "{{container_nodes_zonea.tagged_instances if 'tagged_instances' in container_nodes_zonea else None}}"
+    containers_zoneb: "{{container_nodes_zoneb.tagged_instances if 'tagged_instances' in container_nodes_zoneb else None}}"
+    containers_zonec: "{{container_nodes_zonec.tagged_instances if 'tagged_instances' in container_nodes_zonec else None}}"
+
+- name: Set all node container variables
+  set_fact:
+    all_nodes: "{{ containers_zonea | union(containers_zoneb) | union(containers_zonec) }}"
+  when: all_nodes is undefined
+
+- name: debug all nodes
+  debug: var=all_nodes
+
+- name: Set all node container ids
+  set_fact:
+    all_node_ids: "{{ all_nodes | map(attribute='id') | list }}"
+  when: all_node_ids is undefined
+
+- name: Set master node container variables
+  set_fact:
+    master_node: "{{ all_node_ids | random }}"
+  when: master_nodes is undefined
+
+- name: Set broker node container variables
+  set_fact:
+    broker_node: "{{ all_node_ids | difference(master_node) | random }}"
+  when: broker_nodes is undefined
+
+- name: Set middlemanager node container variables
+  set_fact:
+    middlemanager_node: "{{ all_node_ids | difference(master_node) | difference(broker_node) | random }}"
+  when: middlemanager_nodes is undefined
+
+- name: Set coordinator node container variables
+  set_fact:
+    coordinator_node: "{{ all_node_ids | difference(master_node) | difference(broker_node) | difference(middlemanager_node) | random }}"
+  when: coordinator_nodes is undefined
+
+- name: Set historical node container variables
+  set_fact:
+    historical_nodes: "{{ all_node_ids | difference(master_node) | difference(broker_node) | difference(middlemanager_node) | difference(coordinator_node) }}"
+  when: historical_nodes is undefined
+
+- name: tag node to be the master
+  ec2_tag:
+    region: "{{ region }}"
+    resource: "{{ item }}"
+    state: present
+    tags:
+      zookeeper: master
+      postgres: master
+  with_items:
+    - "{{ master_node }}"
+
+- name: tag node to be the broker
+  ec2_tag:
+    region: "{{ region }}"
+    resource: "{{ item }}"
+    state: present
+    tags:
+      druid: broker
+  with_items:
+    - "{{ broker_node }}"
+
+- name: tag node to be the middlemanager
+  ec2_tag:
+    region: "{{ region }}"
+    resource: "{{ item }}"
+    state: present
+    tags:
+      druid: middlemanager
+  with_items:
+    - "{{ middlemanager_node }}"
+
+- name: tag node to be the coordinator
+  ec2_tag:
+    region: "{{ region }}"
+    resource: "{{ item }}"
+    state: present
+    tags:
+      druid: coordinator
+  with_items:
+    - "{{ coordinator_node }}"
+
+- name: tag node to be a historical
+  ec2_tag:
+    region: "{{ region }}"
+    resource: "{{ item }}"
+    state: present
+    tags:
+      druid: historical
+  with_items:
+    - "{{ historical_nodes }}"
+
+- name: Wait for SSH on nodes
+  when: '"public_ip" in item.1'
+  wait_for: host={{ item.1.public_ip }} delay=15 port=22 state=started
+  with_indexed_items:
+    - "{{ all_nodes }}"

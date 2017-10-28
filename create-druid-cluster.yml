@@ -1,0 +1,9 @@
+---
+- hosts: 127.0.0.1
+  vars_files:
+    - vars/cluster.yml
+  connection: local
+  roles:
+    - role: security-groups
+    - role: container-node
+

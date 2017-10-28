@@ -1,0 +1,5 @@
+- name: copy historical supervisord config
+  template: src=supervisord.conf dest=/etc/supervisor.d/historical.conf 
+
+- name: start historical
+  supervisorctl: name=historical state=restarted 

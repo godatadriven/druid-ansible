@@ -1,0 +1,88 @@
+{
+    "type": "index_hadoop",
+    "spec": {
+        "ioConfig": {
+            "type": "hadoop",
+            "inputSpec": {
+                "type": "static",
+                "paths": "s3n://druidbucket/data/wikiticker-2015-09-12-sampled.json.gz"
+            }
+        },
+        "tuningConfig": {
+            "type": "hadoop",
+            "jobProperties": {
+                "fs.s3.awsAccessKeyId": "<AWS_ACCESS_KEY>",
+                "fs.s3.awsSecretAccessKey": "<AWS_SECRET_KEY>",
+                "fs.s3.impl": "org.apache.hadoop.fs.s3native.NativeS3FileSystem",
+                "fs.s3n.awsAccessKeyId": "<AWS_ACCESS_KEY>",
+                "fs.s3n.awsSecretAccessKey": "<AWS_SECRET_KEY>",
+                "fs.s3n.impl": "org.apache.hadoop.fs.s3native.NativeS3FileSystem",
+                "io.compression.codecs": "org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.DefaultCodec,org.apache.hadoop.io.compress.BZip2Codec,org.apache.hadoop.io.compress.SnappyCodec"
+            }
+        },
+        "dataSchema": {
+            "dataSource": "wikiticker",
+            "granularitySpec": {
+                "type": "uniform",
+                "segmentGranularity": "day",
+                "queryGranularity": "none",
+                "intervals": ["2015-09-12/2015-09-13"]
+            },
+            "parser": {
+                "type": "string",
+                "parseSpec": {
+                    "format": "json",
+                    "dimensionsSpec": {
+                        "dimensions": [
+                            "channel",
+                            "cityName",
+                            "comment",
+                            "countryIsoCode",
+                            "countryName",
+                            "isAnonymous",
+                            "isMinor",
+                            "isNew",
+                            "isRobot",
+                            "isUnpatrolled",
+                            "metroCode",
+                            "namespace",
+                            "page",
+                            "regionIsoCode",
+                            "regionName",
+                            "user"
+                        ]
+                    },
+                    "timestampSpec": {
+                        "format": "auto",
+                        "column": "time"
+                    }
+                }
+            },
+            "metricsSpec": [{
+                    "name": "count",
+                    "type": "count"
+                },
+                {
+                    "name": "added",
+                    "type": "longSum",
+                    "fieldName": "added"
+                },
+                {
+                    "name": "deleted",
+                    "type": "longSum",
+                    "fieldName": "deleted"
+                },
+                {
+                    "name": "delta",
+                    "type": "longSum",
+                    "fieldName": "delta"
+                },
+                {
+                    "name": "user_unique",
+                    "type": "hyperUnique",
+                    "fieldName": "user"
+                }
+            ]
+        }
+    }
+}

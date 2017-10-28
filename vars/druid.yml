@@ -1,0 +1,41 @@
+druid_version: 0.10.1
+druid_download_url: http://static.druid.io/artifacts/releases/druid-{{ druid_version }}-bin.tar.gz
+#druid_download_url: https://gitlab.cino-portal.com/infra/druid-build/-/jobs/artifacts/master/download?job=druid:build
+druid_environment: acc
+druid_root_logger_level: info
+druid_run_user: druid
+
+druid_db_host: "{{ hostvars[groups['tag_postgres_master'][0]]['ansible_fqdn'] }}"
+druid_db_url: jdbc:postgresql://{{ druid_db_host }}/druid
+druid_db_user: druid
+druid_db_passwd: driud
+druid_db_jdbc_download_url: https://jdbc.postgresql.org/download/postgresql-42.1.4.jar
+# deep_storage_type: hdfs
+# deep_storage_location: /druid/{{ druid_environment }}/data/datasources
+# deep_storage_log_location: /druid/{{ druid_environment }}/logs/indexing-logs
+deep_storage_type: s3
+druid_s3_accessKey: <AWS_ACCESS_KEY>
+druid_s3_secretKey: <AWS_SECRET_KEY>
+druid_s3_bucketname: druidbucket
+druid_s3_baseKey: deepstorage
+deep_storage_location: "{{ druid_s3_bucketname }}/data"
+deep_storage_log_location: "{{ druid_s3_bucketname }}/logs"
+
+druid_zookeeper_hosts: 
+  - zk_host: "{{ hostvars[groups['tag_zookeeper_master'][0]]['ansible_fqdn'] }}"
+    zk_id: 0
+    zk_ports: "2888:3888"
+  # - zk_host: "{{ hostvars[groups['tag_zookeeper_slave'][0]]['ansible_fqdn'] }}"
+  #   zk_id: 1
+  #   zk_ports: "2888:3888"
+
+zk_client_port: 2181
+zookeeper: "{{ druid_zookeeper_hosts | map(attribute='zk_host') | join(':{0},'.format(zk_client_port)) }}:{{ zk_client_port }}"
+
+druid_conf_dir: /etc/druid/conf
+druid_base_dir: /opt/app
+druid_tmpdir: /tmp
+druid_indexer_task_baseDir: "{{ druid_tmpdir }}/druid/task"
+segment_cache_location: "{{ druid_base_dir }}/druid-data"
+druid_indexer_task_hadoopWorkingPath: "/druid/{{ druid_environment }}/druid-indexing"
+

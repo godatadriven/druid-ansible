@@ -1,0 +1,53 @@
+---
+- hosts: tag_postgres_master
+  vars_files:
+    - vars/druid.yml
+  become: yes
+  roles:
+    - postgres-common
+    - { role: postgres-druid, become_user: postgres }
+
+- hosts: tag_zookeeper_master:tag_zookeeper_slave
+  vars_files:
+    - vars/druid.yml
+  become: yes
+  roles:
+    - zookeeper
+
+- hosts: tag_Name_druid_cluster_node
+  vars_files:
+    - vars/druid.yml
+  become: yes
+  roles:
+    - supervisor
+    - druid-common
+
+- hosts: tag_druid_historical
+  vars_files:
+    - vars/druid.yml
+  become: yes
+  roles:
+    - historical
+      
+- hosts: tag_druid_coordinator
+  vars_files:
+    - vars/druid.yml
+  become: yes
+  roles:
+    - coordinator
+   
+- hosts: tag_druid_broker
+  vars_files:
+    - vars/druid.yml
+  become: yes
+  roles:
+    - broker
+
+- hosts: tag_druid_middlemanager
+  vars_files:
+    - vars/druid.yml
+  become: yes
+  roles:
+    - historical
+    - middle-manager
+

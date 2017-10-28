@@ -1,0 +1,27 @@
+- name: install postgres and dependencies
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - postgresql-server 
+    - postgresql-contrib
+    - python-psycopg2
+
+- name: Initiate database
+  command: service postgresql initdb
+  args:
+    creates: /var/lib/pgsql/data/postgresql.conf
+
+- name: Set correct access for druid user
+  lineinfile:
+    path: /var/lib/pgsql/data/pg_hba.conf
+    line: 'hostnossl  druid  druid  all  md5'
+
+- name: Make sure postgres binds to external
+  lineinfile:
+    path: /var/lib/pgsql/data/postgresql.conf
+    regexp: "^listen_addresses = 'localhost'"
+    line: "listen_addresses = '*'"
+
+- name: Enable and start the postgres service
+  service: name=postgresql enabled=yes state=started

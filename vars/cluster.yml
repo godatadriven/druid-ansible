@@ -1,0 +1,21 @@
+---
+region: eu-west-1
+ami: <ami-id>
+
+node_volumes:
+  - device_name: /dev/sda1
+    volume_size: 30
+    device_type: gp2
+    delete_on_termination: true
+
+instance_type: t2.2xlarge
+node_count_zone_a: 10
+node_count_zone_b: 0
+node_count_zone_c: 0
+
+# AWS User specific vars
+main_vpc_id: <vpc-id>
+subnet_id_a: <subnet-id-region-a>
+subnet_id_b: <subnet-id-region-b>
+subnet_id_c: <subnet-id-region-c>
+key_name: <druid-key-pem-file>

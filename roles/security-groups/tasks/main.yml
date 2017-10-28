@@ -1,0 +1,80 @@
+---
+- name: Create and add rules to outbound traffic security group
+  ec2_group:
+    name: druid-cluster-outboundtraffic
+    description: Security group for outbound traffic
+    region: "{{ region }}"
+    vpc_id: "{{ main_vpc_id }}"
+    state: present
+    rules_egress:
+      # Needed for package managers such as yum and pip.
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        cidr_ip: "{{ ip_range }}"
+      - proto: tcp
+        from_port: 443
+        to_port: 443
+        cidr_ip: "{{ ip_range }}"
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: "{{ ip_range }}"
+  register: outboundtraffic_group
+
+# ========================================================
+# Security groups used for cdh nodes
+# ========================================================
+
+- name: Create and add rules to druid cluster security group
+  ec2_group:
+    name: druid-cluster
+    description: Security group for druid cluster nodes
+    region: "{{ region }}"
+    state: present
+    rules:
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: "{{ ip_range }}"
+      # Zookeeper external ports
+      - proto: tcp
+        from_port: 2181
+        to_port: 2181
+        cidr_ip: "{{ ip_range }}"
+      - proto: tcp
+        from_port: 2888
+        to_port: 2888
+        cidr_ip: "{{ ip_range }}"
+      - proto: tcp
+        from_port: 3888
+        to_port: 3888
+        cidr_ip: "{{ ip_range }}"
+      # Postgres external ports
+      - proto: tcp
+        from_port: 5432
+        to_port: 5432
+        cidr_ip: "{{ ip_range }}"
+      # Druid external ports
+      - proto: tcp
+        from_port: 8081
+        to_port: 8081
+        cidr_ip: "{{ ip_range }}"
+  register: druid_cluster_group
+
+- name: Create and add rules to druid inter-node security group
+  local_action:
+    module: ec2_group
+    name: druid-cluster-internode
+    description: Security group for druid cluster inter-node communication
+    region: "{{ region }}"
+    state: present
+    rules:
+      - proto: all
+        group_id: "{{ druid_cluster_group.group_id }}"
+    rules_egress:
+      - proto: all
+        group_id: "{{ druid_cluster_group.group_id }}"
+  register: druid_cluster_internode_group
+
+

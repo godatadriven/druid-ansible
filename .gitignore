@@ -1,0 +1,6 @@
+tmp
+.gems
+.idea*
+*.pem
+*.retry
+notes.txt

@@ -1,0 +1,6 @@
+- name: copy coordinator supervisord config
+  template: src=supervisord.conf dest=/etc/supervisor.d/coordinator.conf 
+
+- name: start coordinator
+  supervisorctl: name=coordinator state=restarted 
+

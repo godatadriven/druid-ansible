@@ -1,0 +1,5 @@
+- name: copy middlemanager supervisord config
+  template: src=supervisord.conf dest=/etc/supervisor.d/middlemanager.conf 
+
+- name: start middlemanager
+  supervisorctl: name=middleManager state=restarted 

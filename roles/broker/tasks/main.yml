@@ -1,0 +1,5 @@
+- name: copy broker supervisord config
+  template: src=supervisord.conf dest=/etc/supervisor.d/broker.conf 
+
+- name: start broker
+  supervisorctl: name=broker state=restarted 

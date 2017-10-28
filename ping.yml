@@ -1,0 +1,107 @@
+- hosts: tag_postgres_master
+  gather_facts: no
+  tasks:
+  - name: ping db master node
+    ping:
+
+- hosts: tag_zookeeper_master
+  gather_facts: no
+  tasks:
+  - name: ping zookeeper master node
+    ping:
+
+- hosts: tag_zookeeper_slave
+  gather_facts: no
+  tasks:
+  - name: ping zookeeper slave node
+    ping:
+
+- hosts: all
+  gather_facts: no
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: ping all nodes
+    ping:
+
+- hosts: tag_Name_druid_cluster_node
+  gather_facts: no
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: ping all druid nodes
+    ping:
+
+- hosts: tag_druid_broker
+  gather_facts: no
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: ping druid broker nodes
+    ping:
+
+- hosts: tag_druid_coordinator
+  gather_facts: no
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: ping druid coordinator nodes
+    ping:
+
+- hosts: tag_druid_historical
+  gather_facts: no
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: ping druid historical nodes
+    ping:
+
+- hosts: tag_druid_middlemanager
+  gather_facts: no
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: ping druid middlemanager nodes
+    ping:
+
+# - hosts: tag_druid_overlord
+#   gather_facts: no
+#   become: yes
+#   become_method: sudo
+#   tasks:
+#   - name: ping druid overlord nodes
+#     ping:
+
+# - hosts: tag_zookeeper_master:tag_zookeeper_slave
+#   gather_facts: yes
+#   vars_files:
+#     - vars/druid.yml
+#   tasks:
+#   # - name: Debug vars 1
+#   #   debug: msg="{{ hostvars }}"
+#   # - name: Debug vars 2
+#   #   debug: msg="{{ groups['tag_zookeeper_master'] }}"
+#   # - name: Debug vars 3
+#   #   debug: msg="{{ groups['tag_zookeeper_master'][0] }}"
+#   - name: Debug vars 4a
+#     debug: msg="{{ hostvars[groups['tag_zookeeper_master'][0]]['ansible_fqdn'] }}"
+#   - name: Debug vars 4b
+#     debug: msg="{{ hostvars[groups['tag_zookeeper_slave'][0]]['ansible_fqdn'] }}"
+#   - name: Debug vars 5
+#     debug: msg="{{ druid_zookeeper_hosts }}"
+#   - name: Debug vars 6
+#     debug: msg="{{ druid_zookeeper_hosts | map(attribute='zk_host') | list }}"
+#   - name: Debug vars 7
+#     debug: msg="{{ ansible_fqdn }}"
+#   - name: Debug vars 8
+#     debug: msg="{{ druid_zookeeper_hosts | selectattr('zk_host', 'match', '^'+ansible_fqdn+'$') | list }}"
+#   - name: Debug vars 9
+#     debug: msg="{{ druid_zookeeper_hosts | selectattr('zk_host', 'match', '^'+ansible_fqdn+'$') | map(attribute='zk_id') | list }}"
+#   - name: Debug vars 10
+#     debug: msg="{{ druid_zookeeper_hosts | selectattr('zk_host', 'match', '^'+ansible_fqdn+'$') | map(attribute='zk_id') | list | first }}"
+#   - name: Determine zookeeper id 
+#     set_fact: 
+#       zookeeper_myid: "{{ druid_zookeeper_hosts | selectattr('zk_host',  'match', '^'+ansible_fqdn+'$') | map(attribute='zk_id') | list | first }}"
+
+#   - name: Debug zookeeper id 
+#     debug: msg="{{ zookeeper_myid }}"

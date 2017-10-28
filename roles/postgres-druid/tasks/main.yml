@@ -1,0 +1,11 @@
+- name: ensure database is created
+  postgresql_db: name=druid
+
+- name: ensure user has access to database
+  postgresql_user: db=druid name={{ druid_db_user }} password={{ druid_db_passwd }} priv=ALL
+
+- name: ensure user does not have unnecessary privilege
+  postgresql_user: name={{ druid_db_user }} role_attr_flags=NOSUPERUSER,NOCREATEDB
+  
+- name: ensure no other user can access the database
+  postgresql_privs: db=druid role=PUBLIC type=database priv=ALL state=absent
