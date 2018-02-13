@@ -19,13 +19,6 @@
         dest: "{{ druid_extensions_dir }}"
         remote_src: yes
 
-    - name: Enable graphite-emitter extension on all druid nodes
-      lineinfile:
-        path: "{{ druid_conf_dir }}/_common/common.runtime.properties"
-        regexp: "^druid.extensions.loadList=*"
-        state: present
-        line: druid.extensions.loadList=["postgresql-metadata-storage", "druid-hdfs-storage", "druid-s3-extensions", "druid-histogram", "druid-datasketches", "druid-lookups-cached-global", "druid-avro-extensions", "graphite-emitter"]
-
     - name: Add metrics configuration to Druid config file
       lineinfile:
         path: "{{ druid_conf_dir }}/_common/common.runtime.properties"
