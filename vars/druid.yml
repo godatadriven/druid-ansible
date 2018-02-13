@@ -46,6 +46,7 @@ metrics_port: <METRICS_PORT>
 metrics_white_list_location: "{{druid_conf_dir}}/whiteListMap.json"
 
 druid_metrics_config:
+  druid.extensions.loadList: druid.extensions.loadList=["postgresql-metadata-storage", "druid-hdfs-storage", "druid-s3-extensions", "druid-histogram", "druid-datasketches", "druid-lookups-cached-global", "druid-avro-extensions", "graphite-emitter"]
   druid.emitter: druid.emitter=composing
   druid.emitter.composing.emitters: druid.emitter.composing.emitters=["logging", "graphite"]
   druid.emitter.graphite.hostname: druid.emitter.graphite.hostname={{ metrics_host }}
