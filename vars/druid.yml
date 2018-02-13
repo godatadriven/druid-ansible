@@ -21,7 +21,7 @@ druid_s3_baseKey: deepstorage
 deep_storage_location: "{{ druid_s3_bucketname }}/data"
 deep_storage_log_location: "{{ druid_s3_bucketname }}/logs"
 
-druid_zookeeper_hosts: 
+druid_zookeeper_hosts:
   - zk_host: "{{ hostvars[groups['tag_zookeeper_master'][0]]['ansible_fqdn'] }}"
     zk_id: 0
     zk_ports: "2888:3888"
@@ -37,5 +37,18 @@ druid_base_dir: /opt/app
 druid_tmpdir: /tmp
 druid_indexer_task_baseDir: "{{ druid_tmpdir }}/druid/task"
 segment_cache_location: "{{ druid_base_dir }}/druid-data"
+druid_extensions_dir: "{{ druid_base_dir}}/druid/extensions"
 druid_indexer_task_hadoopWorkingPath: "/druid/{{ druid_environment }}/druid-indexing"
 
+graphite_emitter_archive: resources/graphite-emitter-extensions-0.11.0.tar.gz
+metrics_host: <METRICS_HOST>
+metrics_port: <METRICS_PORT>
+metrics_white_list_location: "{{druid_conf_dir}}/whiteListMap.json"
+
+druid_metrics_config:
+  druid.emitter: druid.emitter=composing
+  druid.emitter.composing.emitters: druid.emitter.composing.emitters=["logging", "graphite"]
+  druid.emitter.graphite.hostname: druid.emitter.graphite.hostname={{ metrics_host }}
+  druid.emitter.graphite.port: druid.emitter.graphite.port={{ metrics_port }}
+  druid.emitter.graphite.protocol: druid.emitter.graphite.protocol=plaintext
+  druid.emitter.graphite.eventConverter=: druid.emitter.graphite.eventConverter={"type":"whiteList", "namespacePrefix":"druid", "mapPath":"{{ metrics_white_list_location }}"}

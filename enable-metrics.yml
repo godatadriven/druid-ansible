@@ -1,0 +1,69 @@
+- hosts: tag_Name_druid_cluster_node
+  vars_files:
+    - vars/druid.yml
+  become: yes
+  tasks:
+    - name: Copy graphite emitter to tmp folder
+      copy:
+        src: "{{ graphite_emitter_archive }}"
+        dest: "{{ druid_tmpdir }}/graphite-emitter.tar.gz"
+
+    - name: Copy metrics whiteList file
+      copy:
+        src: resources/whiteListMap.json
+        dest: "{{ metrics_white_list_location }}"
+
+    - name: Unarchive graphite emitter to extension folder
+      unarchive:
+        src: "{{ druid_tmpdir }}/graphite-emitter.tar.gz"
+        dest: "{{ druid_extensions_dir }}"
+        remote_src: yes
+
+    - name: Enable graphite-emitter extension on all druid nodes
+      lineinfile:
+        path: "{{ druid_conf_dir }}/_common/common.runtime.properties"
+        regexp: "^druid.extensions.loadList=*"
+        state: present
+        line: druid.extensions.loadList=["postgresql-metadata-storage", "druid-hdfs-storage", "druid-s3-extensions", "druid-histogram", "druid-datasketches", "druid-lookups-cached-global", "druid-avro-extensions", "graphite-emitter"]
+
+    - name: Add metrics configuration to Druid config file
+      lineinfile:
+        path: "{{ druid_conf_dir }}/_common/common.runtime.properties"
+        regexp: "{{ item.key }}=*"
+        state: present
+        line: "{{ item.value }}"
+      with_dict: "{{ druid_metrics_config }}"
+
+- hosts: tag_druid_coordinator
+  vars_files:
+    - vars/druid.yml
+  become: yes
+  tasks:
+    - name: Set monitors to use for the coordinator
+      lineinfile:
+        path: "{{ druid_conf_dir }}/coordinator/runtime.properties"
+        regexp: "^druid.monitoring.monitors=*"
+        state: present
+        line: druid.monitoring.monitors=["io.druid.server.metrics.QueryCountStatsMonitor", "com.metamx.metrics.JvmMonitor"]
+
+    - name: Restart the coordinator
+      supervisorctl:
+        name: coordinator
+        state: restarted
+
+- hosts: tag_druid_historical
+  vars_files:
+    - vars/druid.yml
+  become: yes
+  tasks:
+    - name: Set monitors to use for the historicals
+      lineinfile:
+        path: "{{ druid_conf_dir }}/historical/runtime.properties"
+        regexp: "^druid.monitoring.monitors=*"
+        state: present
+        line: druid.monitoring.monitors=["io.druid.server.metrics.QueryCountStatsMonitor", "com.metamx.metrics.JvmMonitor"]
+
+    - name: Restart the historical
+      supervisorctl:
+        name: historical
+        state: restarted
