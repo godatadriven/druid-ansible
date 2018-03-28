@@ -14,7 +14,7 @@
   roles:
     - zookeeper
 
-- hosts: tag_Name_druid_cluster_node
+- hosts: tag_Name_druid_cluster_node:!tag_postgres_master:!tag_metrics_master
   vars_files:
     - vars/druid.yml
   become: yes

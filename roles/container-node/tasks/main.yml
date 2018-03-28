@@ -83,37 +83,34 @@
   when: all_nodes is undefined
 
 - name: debug all nodes
-  debug: var=all_nodes
+  debug: var=all_nodes verbosity=1
 
 - name: Set all node container ids
   set_fact:
     all_node_ids: "{{ all_nodes | map(attribute='id') | list }}"
   when: all_node_ids is undefined
 
+- name: Gather hosts matching master tags.
+  ec2_instance_facts:
+    filters:
+      instance-state-name: running
+      "tag:postgres": master
+    region: "{{ region }}"
+  register: tagged_as_master_nodes
+
+- name: Set tagged as master node variable
+  set_fact:
+    tagged_as_master_node: "{{ tagged_as_master_nodes.instances | map(attribute='instance_id') | list }}"
+
 - name: Set master node container variables
   set_fact:
     master_node: "{{ all_node_ids | random }}"
-  when: master_nodes is undefined
+  when: master_node is undefined and (tagged_as_master_node is undefined or tagged_as_master_node|length == 0)
 
-- name: Set broker node container variables
+- name: Set master node container variables
   set_fact:
-    broker_node: "{{ all_node_ids | difference(master_node) | random }}"
-  when: broker_nodes is undefined
-
-- name: Set middlemanager node container variables
-  set_fact:
-    middlemanager_node: "{{ all_node_ids | difference(master_node) | difference(broker_node) | random }}"
-  when: middlemanager_nodes is undefined
-
-- name: Set coordinator node container variables
-  set_fact:
-    coordinator_node: "{{ all_node_ids | difference(master_node) | difference(broker_node) | difference(middlemanager_node) | random }}"
-  when: coordinator_nodes is undefined
-
-- name: Set historical node container variables
-  set_fact:
-    historical_nodes: "{{ all_node_ids | difference(master_node) | difference(broker_node) | difference(middlemanager_node) | difference(coordinator_node) }}"
-  when: historical_nodes is undefined
+    master_node: "{{ tagged_as_master_node[0] }}"
+  when: master_node is undefined and tagged_as_master_node|length > 0
 
 - name: tag node to be the master
   ec2_tag:
@@ -126,7 +123,29 @@
   with_items:
     - "{{ master_node }}"
 
-- name: tag node to be the broker
+- name: Gather hosts matching broker tags.
+  ec2_instance_facts:
+    filters:
+      instance-state-name: running
+      "tag:druid": broker
+    region: "{{ region }}"
+  register: tagged_as_broker_nodes
+
+- name: Set tagged as broker node variable
+  set_fact:
+    tagged_as_broker_node: "{{ tagged_as_broker_nodes.instances | map(attribute='instance_id') | list }}"
+
+- name: Set broker node container variables
+  set_fact:
+    broker_nodes: "{{ all_node_ids | difference(master_node) | random }}"
+  when: broker_nodes is undefined and (tagged_as_broker_node is undefined or tagged_as_broker_node|length == 0)
+
+- name: Set broker node container variables
+  set_fact:
+    broker_nodes: "{{ tagged_as_broker_node }}"
+  when: broker_nodes is undefined and tagged_as_broker_node|length > 0
+
+- name: tag nodes to be the broker
   ec2_tag:
     region: "{{ region }}"
     resource: "{{ item }}"
@@ -134,9 +153,31 @@
     tags:
       druid: broker
   with_items:
-    - "{{ broker_node }}"
+    - "{{ broker_nodes }}"
 
-- name: tag node to be the middlemanager
+- name: Gather hosts matching middlemanager tags.
+  ec2_instance_facts:
+    filters:
+      instance-state-name: running
+      "tag:druid": middlemanager
+    region: "{{ region }}"
+  register: tagged_as_middlemanager_nodes
+
+- name: Set tagged as middlemanager node variable
+  set_fact:
+    tagged_as_middlemanager_node: "{{ tagged_as_middlemanager_nodes.instances | map(attribute='instance_id') | list }}"
+
+- name: Set middlemanager node container variables
+  set_fact:
+    middlemanager_nodes: "{{ all_node_ids | difference(master_node) | difference(broker_nodes) | random }}"
+  when: middlemanager_nodes is undefined and (tagged_as_middlemanager_node is undefined or tagged_as_middlemanager_node|length == 0)
+
+- name: Set middlemanager node container variables
+  set_fact:
+    middlemanager_nodes: "{{ tagged_as_middlemanager_node }}"
+  when: middlemanager_nodes is undefined and tagged_as_middlemanager_node|length > 0
+
+- name: tag node to be the middlemanagers
   ec2_tag:
     region: "{{ region }}"
     resource: "{{ item }}"
@@ -144,9 +185,31 @@
     tags:
       druid: middlemanager
   with_items:
-    - "{{ middlemanager_node }}"
+    - "{{ middlemanager_nodes }}"
 
-- name: tag node to be the coordinator
+- name: Gather hosts matching coordinator tags.
+  ec2_instance_facts:
+    filters:
+      instance-state-name: running
+      "tag:druid": coordinator
+    region: "{{ region }}"
+  register: tagged_as_coordinator_nodes
+
+- name: Set tagged as coordinator node variable
+  set_fact:
+    tagged_as_coordinator_node: "{{ tagged_as_coordinator_nodes.instances | map(attribute='instance_id') | list }}"
+
+- name: Set coordinator node container variables
+  set_fact:
+    coordinator_nodes: "{{ all_node_ids | difference(master_node) | difference(broker_nodes) | difference(middlemanager_nodes) | random }}"
+  when: coordinator_nodes is undefined and (tagged_as_coordinator_node is undefined or tagged_as_coordinator_node|length == 0)
+
+- name: Set coordinator node container variables
+  set_fact:
+    coordinator_nodes: "{{ tagged_as_coordinator_node }}"
+  when: coordinator_nodes is undefined and tagged_as_coordinator_node|length > 0
+
+- name: tag node to be the coordinators
   ec2_tag:
     region: "{{ region }}"
     resource: "{{ item }}"
@@ -154,7 +217,61 @@
     tags:
       druid: coordinator
   with_items:
-    - "{{ coordinator_node }}"
+    - "{{ coordinator_nodes }}"
+
+- name: Gather hosts matching metric master tags.
+  ec2_instance_facts:
+    filters:
+      instance-state-name: running
+      "tag:metrics": master
+    region: "{{ region }}"
+  register: tagged_as_metric_nodes
+
+- name: Set tagged as metric node variable
+  set_fact:
+    tagged_as_metric_node: "{{ tagged_as_metric_nodes.instances | map(attribute='instance_id') | list }}"
+
+- name: Set metrics node container variables
+  set_fact:
+    metrics_nodes: "{{ all_node_ids | difference(master_node) | difference(broker_nodes) | difference(middlemanager_nodes) | difference(coordinator_nodes) | random }}"
+  when: metrics_nodes is undefined and (tagged_as_metric_node is undefined or tagged_as_metric_node|length == 0)
+
+- name: Set metrics node container variables
+  set_fact:
+    metrics_nodes: "{{ tagged_as_metric_node }}"
+  when: metrics_nodes is undefined and tagged_as_metric_node|length > 0
+
+- name: tag node to be the metrics master node
+  ec2_tag:
+    region: "{{ region }}"
+    resource: "{{ item }}"
+    state: present
+    tags:
+      metrics: master
+  with_items:
+    - "{{ metrics_nodes }}"
+
+- name: Gather hosts matching historical tags.
+  ec2_instance_facts:
+    filters:
+      instance-state-name: running
+      "tag:druid": historical
+    region: "{{ region }}"
+  register: tagged_as_historical_nodes
+
+- name: Set tagged as historical node variable
+  set_fact:
+    tagged_as_historical_node: "{{ tagged_as_historical_nodes.instances | map(attribute='instance_id') | list }}"
+
+- name: Set historical node container variables
+  set_fact:
+    historical_nodes: "{{ all_node_ids | difference(master_node) | difference(broker_nodes) | difference(middlemanager_nodes) | difference(coordinator_nodes) | difference(metrics_nodes) }}"
+  when: historical_nodes is undefined and (tagged_as_historical_node is undefined or tagged_as_historical_node|length == 0)
+
+- name: Set historical node container variables
+  set_fact:
+    historical_nodes: "{{ tagged_as_historical_node }}"
+  when: historical_nodes is undefined and tagged_as_historical_node|length > 0
 
 - name: tag node to be a historical
   ec2_tag:
@@ -168,6 +285,9 @@
 
 - name: Wait for SSH on nodes
   when: '"public_ip" in item.1'
-  wait_for: host={{ item.1.public_ip }} delay=15 port=22 state=started
+  wait_for: host={{ item.1.public_ip }} delay=5 port=22 state=started
   with_indexed_items:
     - "{{ all_nodes }}"
+
+
+

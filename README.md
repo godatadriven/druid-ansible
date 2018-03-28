@@ -78,6 +78,7 @@ ansible-playbook create-druid-cluster.yml
 ansible-playbook --user centos --private-key ./druid.pem ping.yml
 ansible-playbook --user centos --private-key ./druid.pem java.yml
 ansible-playbook --user centos --private-key ./druid.pem playbook.yml
+ansible-playbook --user centos --private-key ./druid.pem enable-metrics.yml
 
 Testing
 -------

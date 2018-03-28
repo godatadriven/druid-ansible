@@ -41,13 +41,13 @@ druid_extensions_dir: "{{ druid_base_dir}}/druid/extensions"
 druid_indexer_task_hadoopWorkingPath: "/druid/{{ druid_environment }}/druid-indexing"
 
 graphite_emitter_archive: resources/graphite-emitter-extensions-0.11.0.tar.gz
-metrics_host: <METRICS_HOST>
-metrics_port: <METRICS_PORT>
+metrics_host: "{{ hostvars[groups['tag_metrics_master'][0]]['ansible_fqdn'] }}"
+metrics_port: 2003
 metrics_white_list_location: "{{druid_conf_dir}}/whiteListMap.json"
 
 druid_metrics_config:
   druid.extensions.loadList: druid.extensions.loadList=["postgresql-metadata-storage", "druid-hdfs-storage", "druid-s3-extensions", "druid-histogram", "druid-datasketches", "druid-lookups-cached-global", "druid-avro-extensions", "graphite-emitter"]
-  druid.emitter: druid.emitter=composing
+  druid.emitter=: druid.emitter=composing
   druid.emitter.composing.emitters: druid.emitter.composing.emitters=["logging", "graphite"]
   druid.emitter.graphite.hostname: druid.emitter.graphite.hostname={{ metrics_host }}
   druid.emitter.graphite.port: druid.emitter.graphite.port={{ metrics_port }}
