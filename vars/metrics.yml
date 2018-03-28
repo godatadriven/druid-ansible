@@ -1,0 +1,21 @@
+---
+grafana_version: latest
+
+# Variables correspond to ones in grafana.ini configuration file
+# Security
+grafana_security:
+  admin_user: admin
+  admin_password: "grafana456"
+
+# Database setup
+grafana_database:
+  type: sqlite3
+
+influxdb_packages:
+- influxdb
+# The influxdb package uses `which systemctl` to decide if systemd is
+# installed on the target machine. That test fails in the upstream centos
+# Docker image because while systemctl(1) is installed, which(1) is not!
+# Hence, we install which(1) so that check will pick the right init method.
+- which
+- python2-pip

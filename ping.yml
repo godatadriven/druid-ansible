@@ -1,23 +1,29 @@
 - hosts: tag_postgres_master
-  gather_facts: no
+  gather_facts: yes
   tasks:
   - name: ping db master node
     ping:
 
 - hosts: tag_zookeeper_master
-  gather_facts: no
+  gather_facts: yes
   tasks:
   - name: ping zookeeper master node
     ping:
 
 - hosts: tag_zookeeper_slave
-  gather_facts: no
+  gather_facts: yes
   tasks:
   - name: ping zookeeper slave node
     ping:
 
+- hosts: tag_metrics_master
+  gather_facts: yes
+  tasks:
+  - name: ping metrics master node
+    ping:
+
 - hosts: all
-  gather_facts: no
+  gather_facts: yes
   become: yes
   become_method: sudo
   tasks:
@@ -25,15 +31,23 @@
     ping:
 
 - hosts: tag_Name_druid_cluster_node
-  gather_facts: no
+  gather_facts: yes
   become: yes
   become_method: sudo
   tasks:
-  - name: ping all druid nodes
+  - name: ping all cluster nodes
+    ping:
+
+- hosts: tag_Name_druid_cluster_node:!tag_postgres_master:!tag_metrics_master
+  gather_facts: yes
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: ping all druid nodes (not master and not metrics)
     ping:
 
 - hosts: tag_druid_broker
-  gather_facts: no
+  gather_facts: yes
   become: yes
   become_method: sudo
   tasks:
@@ -41,7 +55,7 @@
     ping:
 
 - hosts: tag_druid_coordinator
-  gather_facts: no
+  gather_facts: yes
   become: yes
   become_method: sudo
   tasks:
@@ -49,7 +63,7 @@
     ping:
 
 - hosts: tag_druid_historical
-  gather_facts: no
+  gather_facts: yes
   become: yes
   become_method: sudo
   tasks:
@@ -57,7 +71,7 @@
     ping:
 
 - hosts: tag_druid_middlemanager
-  gather_facts: no
+  gather_facts: yes
   become: yes
   become_method: sudo
   tasks:
@@ -65,7 +79,7 @@
     ping:
 
 # - hosts: tag_druid_overlord
-#   gather_facts: no
+#   gather_facts: yes
 #   become: yes
 #   become_method: sudo
 #   tasks:
@@ -99,9 +113,9 @@
 #     debug: msg="{{ druid_zookeeper_hosts | selectattr('zk_host', 'match', '^'+ansible_fqdn+'$') | map(attribute='zk_id') | list }}"
 #   - name: Debug vars 10
 #     debug: msg="{{ druid_zookeeper_hosts | selectattr('zk_host', 'match', '^'+ansible_fqdn+'$') | map(attribute='zk_id') | list | first }}"
-#   - name: Determine zookeeper id 
-#     set_fact: 
+#   - name: Determine zookeeper id
+#     set_fact:
 #       zookeeper_myid: "{{ druid_zookeeper_hosts | selectattr('zk_host',  'match', '^'+ansible_fqdn+'$') | map(attribute='zk_id') | list | first }}"
 
-#   - name: Debug zookeeper id 
+#   - name: Debug zookeeper id
 #     debug: msg="{{ zookeeper_myid }}"

@@ -60,6 +60,28 @@
         from_port: 8081
         to_port: 8081
         cidr_ip: "{{ ip_range }}"
+      - proto: tcp
+        from_port: 8082
+        to_port: 8082
+        cidr_ip: "{{ ip_range }}"
+      - proto: tcp
+        from_port: 8083
+        to_port: 8083
+        cidr_ip: "{{ ip_range }}"
+      - proto: tcp
+        from_port: 8091
+        to_port: 8091
+        cidr_ip: "{{ ip_range }}"
+      # Grafana external port
+      - proto: tcp
+        from_port: 3000
+        to_port: 3000
+        cidr_ip: "{{ ip_range }}"
+      # Chronograf external port
+      - proto: tcp
+        from_port: 8888
+        to_port: 8888
+        cidr_ip: "{{ ip_range }}"
   register: druid_cluster_group
 
 - name: Create and add rules to druid inter-node security group

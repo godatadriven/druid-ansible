@@ -7,3 +7,12 @@
     - role: security-groups
     - role: container-node
 
+  post_tasks:
+
+    - name: Refresh EC2 cache
+      command: hosts/ec2.py --refresh-cache
+    
+    - name: Refresh inventory
+      meta: refresh_inventory
+
+
