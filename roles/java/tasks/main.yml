@@ -1,8 +1,8 @@
 ---
-# file: oracle-java/tasks/redhat/main.yml
-#
-# Task file to install Oracle Java Development Kit in a system with a Redhat based Linux distribution.
-#
+- name: install openjdk java from yum
+  yum:
+    name: java
+  when: not use_oracle_java
 
 - name: get latest JDK download page
   uri:
@@ -13,13 +13,15 @@
   until: result.status == 200
   retries: 5
   delay: 5
+  when: use_oracle_java
 
 - name: determine latest java download page and version
   set_fact: latest_java_page_and_version="{{ (result.content.replace('\n','')|regex_replace('.*(/technetwork/java/javase/downloads/jdk(\d+)-downloads.*?.html).*', 'http://www.oracle.com/\1\n\2')).split('\n') }}"
+  when: use_oracle_java
 
 - name: define download page URL based on latest version
   set_fact: download_page_url="{{ latest_java_page_and_version[0] }}"
-  when: "{{ latest_java_page_and_version[1]|version_compare(oracle_java_version,'=') }}"
+  when: use_oracle_java and latest_java_page_and_version[1]|version_compare(oracle_java_version,'=')
   
 - block:
   
@@ -31,28 +33,33 @@
   - name: define download page URL for "{{ oracle_java_version }}"
     set_fact: download_page_url="{{ result.content|regex_search('href=\"[^\"]+\">Java SE\s+' + (oracle_java_version|string) + '\s?<')|regex_replace('.*href=\"([^\"]+)\".*','http://www.oracle.com/\1') }}"
   
-  when: "{{ latest_java_page_and_version[1]|version_compare(oracle_java_version,'!=') and oracle_java_version }}"
+  when: use_oracle_java and latest_java_page_and_version[1]|version_compare(oracle_java_version,'!=') and oracle_java_version
 
-- name: show download page URL
-  debug: msg="{{ download_page_url }}"
+# - name: show download page URL
+#   debug: msg="{{ download_page_url }}"
 
 - name: get lastest JDK rpm url
   uri: url="{{ download_page_url }}"
        return_content=yes
   register: result
+  when: use_oracle_java
 
 - name: set oracle_java_rpm_url
   set_fact: oracle_java_rpm_url="{{ result.content|regex_search('https?://download.oracle.com/.*?/jdk-\w+-linux-' + oracle_java_ansible_arch_mappings[ansible_architecture] + '.rpm') }}"
+  when: use_oracle_java
 
 - name: set some variables
   set_fact: oracle_java_rpm_filename="{{ oracle_java_rpm_url | basename }}"
             oracle_java_version="{{ oracle_java_rpm_url | basename|regex_replace('jdk-(\d+)u(\d+)-linux.*','\1') }}"
             oracle_java_version_update="{{ oracle_java_rpm_url | basename|regex_replace('jdk-(\d+)u(\d+)-linux.*','\2') }}"
+  when: use_oracle_java
 
 - debug: msg="Downloading java {{ oracle_java_version }}u{{ oracle_java_version_update }} to {{ oracle_java_rpm_filename }} from {{ oracle_java_rpm_url }}"
+  when: use_oracle_java
 
 - name: Remove downloaded RPM to prevent using corrupt rpm file over and over again
   file: path={{ oracle_java_dir_source }}/{{ oracle_java_rpm_filename }} state=absent
+  when: use_oracle_java
 
 - name: download Java RPM
   get_url:
@@ -64,6 +71,7 @@
   register: oracle_java_task_rpm_download
   become: yes
   tags: [ installation ]
+  when: use_oracle_java
 
 - name: install RPM
   action: "{{ ansible_pkg_mgr }} name={{ oracle_java_dir_source }}/{{ oracle_java_rpm_filename }} state=present"
@@ -82,24 +90,24 @@
     - { path: "{{ oracle_java_home }}/bin", exe: 'javac' }
     - { path: "{{ oracle_java_home }}/bin", exe: 'javadoc' }
   become: yes
-  when: (
+  when: use_oracle_java and oracle_java_version_update is defined and (
           oracle_java_set_as_default and
           oracle_java_task_rpm_download is defined and
           oracle_java_task_rpm_download|changed
-        ) or (
+        ) or (use_oracle_java and oracle_java_version_update is defined and (
           oracle_java_set_as_default and
           oracle_java_installed is defined and
           oracle_java_installed and
           oracle_java_version_installed is defined and
-          oracle_java_version_installed != oracle_java_version_string)
+          oracle_java_version_installed != oracle_java_version_string))
   register: oracle_java_task_set_default
 
 - name: in case there were changes, check host environment again
-  include: check-environment.yml
-  when: (
+  include_tasks: check-environment.yml
+  when: use_oracle_java and (
           oracle_java_task_rpm_download is defined and
           not oracle_java_task_rpm_download|skipped
-        ) or (
+        ) or (use_oracle_java and (
           oracle_java_task_set_default is defined and
           oracle_java_task_set_default|changed
-        )
+        ))

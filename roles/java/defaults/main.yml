@@ -1,4 +1,5 @@
 ---
+use_oracle_java: False
 oracle_java_dir_source: '/usr/local/src'
 
 oracle_java_set_as_default: yes
