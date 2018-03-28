@@ -1,4 +1,12 @@
 ---
+- name: Get local public ip
+  ipify_facts:
+  register: my_local_public_ip
+
+- name: Set ip_range to contain local public ip
+  set_fact:
+    ip_range: "{{ my_local_public_ip.ansible_facts.ipify_public_ip }}/32"
+
 - name: Create and add rules to outbound traffic security group
   ec2_group:
     name: druid-cluster-outboundtraffic
