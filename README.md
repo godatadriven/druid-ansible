@@ -82,4 +82,9 @@ ansible-playbook --user centos --private-key ./druid.pem enable-metrics.yml
 
 Testing
 -------
-curl -X 'POST' -H 'Content-Type:application/json' -d @index-data.json 34.249.13.4:8081/druid/indexer/v1/task
+To insert data into druid one can use the scripts in the `data` directory.
+- First step is to create the `./data/index-data.json` file based on the `./data/index-data.json.tmpl` file.
+- Second step is to run the `./data/index-data.sh` script.
+
+The `./data/query-druid.sh` script will fire queries to druid and can be used for testing the connection.
+
