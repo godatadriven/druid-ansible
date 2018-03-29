@@ -1,4 +1,4 @@
-druid_upgrade_version: 0.12.0
+druid_upgrade_version: 0.13.0
 druid_upgrade_download_url: http://static.druid.io/artifacts/releases/druid-{{ druid_upgrade_version }}-bin.tar.gz
 
 druid_upgrade_extensions_dir: "{{ druid_base_dir}}/druid-{{ druid_upgrade_version }}/extensions"
