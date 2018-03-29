@@ -9,10 +9,9 @@ for i in {1..100000}; do
     HTTP_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" -L -H'Content-Type: application/json' -XPOST --data-binary @${DIR}/topN.json $URL)
     # extract the status
 	HTTP_STATUS=$(echo $HTTP_RESPONSE | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-
-    if test $HTTP_STATUS -ne 200; then
-        # extract the body
-		HTTP_BODY=$(echo $HTTP_RESPONSE | sed -e 's/HTTPSTATUS\:.*//g')
+    # extract the body
+    HTTP_BODY=$(echo $HTTP_RESPONSE | sed -e 's/HTTPSTATUS\:.*//g')
+    if test $HTTP_STATUS -ne 200 || test "${HTTP_BODY}" == "[ ]"; then
         echo "BOOM!! status:$HTTP_STATUS, response: $HTTP_BODY"
     fi
 
