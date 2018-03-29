@@ -4,3 +4,4 @@ tmp
 *.pem
 *.retry
 notes.txt
+data/*.json
