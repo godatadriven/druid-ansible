@@ -70,6 +70,3 @@
     - name: Debug node readiness right after restart
       debug: var=node_readiness
 
-
-# FINAL STEPS AFTER FULL UPGRADE
-#ADD - common.properties set druid.indexing.doubleStorage=double

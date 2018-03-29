@@ -76,18 +76,15 @@ AWS deployment
 --------------
 ansible-playbook create-druid-cluster.yml
 ansible-playbook --user centos --private-key ./druid.pem ping.yml
-ansible-playbook --user centos --private-key ./druid.pem java.yml
 ansible-playbook --user centos --private-key ./druid.pem playbook.yml
-ansible-playbook --user centos --private-key ./druid.pem enable-metrics.yml
 
 `./data/index-data.sh` to populate druid with the wikiticker data.
 
-For upgrading druid to version 0.12.0 one can use the following scripts.
+For upgrading druid to version 0.xx.x one can use the following scripts.
 
 To see if druid still works during the rolling upgrade you can use the `./data/query-druid.sh` script. This reports an error if the HTTP status is not 200 or if the response is empty. In the non-HA setup of druid this will only be the case for a short period when te broker is being restarted.
 
 ansible-playbook --user centos --private-key ./druid.pem upgrade.yml
-ansible-playbook --user centos --private-key ./druid.pem upgrade-double-storage.yml
 
 
 Testing

@@ -29,6 +29,17 @@
 - name: Create symlink to druid version dir
   file: src="{{ druid_base_dir }}/druid-{{ druid_version }}" dest={{ druid_base_dir }}/druid state=link owner=druid group=druid mode=0775
 
+- name: Copy graphite emitter to tmp folder
+  copy:
+    src: "{{ graphite_emitter_archive }}"
+    dest: "{{ druid_tmpdir }}/graphite-emitter.tar.gz"
+
+- name: Unarchive graphite emitter to extension folder
+  unarchive:
+    src: "{{ druid_tmpdir }}/graphite-emitter.tar.gz"
+    dest: "{{ druid_extensions_dir }}"
+    remote_src: yes
+
 - name: ensure druid config directories exists
   file: path={{ druid_conf_dir }}/{{ item }} state=directory owner=druid group=druid mode=0775
   with_items:
@@ -38,6 +49,11 @@
     - coordinator_parts
     - historical
     - indexing
+
+- name: Copy metrics whiteList file
+  copy:
+    src: resources/whiteListMap.json
+    dest: "{{ metrics_white_list_location }}"
 
 - name: copy over common runtime.properties
   template: src=_common/common.runtime.properties dest={{ druid_conf_dir }}/_common/common.runtime.properties owner=druid group=druid mode=0664

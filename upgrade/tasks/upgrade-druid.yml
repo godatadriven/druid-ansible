@@ -1,59 +1,55 @@
-- name: Download new version of druid
-  # Always call it druid-{{ druid_version }}-bin.tar.gz no matter if it is the real dist file or a gitlab artifact (in zip)
-  # the unarchive module handles it nicely
-  get_url: url={{ druid_upgrade_download_url }}  dest={{ druid_tmpdir }}/druid-{{ druid_upgrade_version }}-bin.tar.gz force=no
+---
+- name: Placeholders for upgrade tasks
+  debug: msg="Uncomment and adjust tasks to accomodate update to newer version"
 
-- name: unarchive druid
-  unarchive: src="{{ druid_tmpdir }}/druid-{{ druid_upgrade_version }}-bin.tar.gz" dest={{ druid_base_dir }} copy=no owner=druid group=druid
+## Download and unpack new druid version
+# - name: Download new version of druid
+#   # Always call it druid-{{ druid_version }}-bin.tar.gz no matter if it is the real dist file or a gitlab artifact (in zip)
+#   # the unarchive module handles it nicely
+#   get_url: url={{ druid_upgrade_download_url }}  dest={{ druid_tmpdir }}/druid-{{ druid_upgrade_version }}-bin.tar.gz force=no
 
-- name: Copy new graphite emitter to tmp folder
-  copy:
-    src: "{{ graphite_upgrade_emitter_archive }}"
-    dest: "{{ druid_tmpdir }}/graphite-emitter.tar.gz"
+# - name: unarchive druid
+#   unarchive: src="{{ druid_tmpdir }}/druid-{{ druid_upgrade_version }}-bin.tar.gz" dest={{ druid_base_dir }} copy=no owner=druid group=druid
 
-- name: Unarchive graphite emitter to extension folder
-  unarchive:
-    src: "{{ druid_tmpdir }}/graphite-emitter.tar.gz"
-    dest: "{{ druid_upgrade_extensions_dir }}"
-    remote_src: yes
+# - name: Copy new graphite emitter to tmp folder
+#   copy:
+#     src: "{{ graphite_upgrade_emitter_archive }}"
+#     dest: "{{ druid_tmpdir }}/graphite-emitter.tar.gz"
 
-- name: Remove deprecated configuration from Druid config file
-  lineinfile:
-    path: "{{ druid_conf_dir }}/_common/common.runtime.properties"
-    regexp: "^#?druid\\.zk\\.paths\\.indexer\\.leaderLatchPath=.*"
-    state: absent
+# - name: Unarchive graphite emitter to extension folder
+#   unarchive:
+#     src: "{{ druid_tmpdir }}/graphite-emitter.tar.gz"
+#     dest: "{{ druid_upgrade_extensions_dir }}"
+#     remote_src: yes
 
-- name: Add balancer strategy to use for the coordinator
-  lineinfile:
-    path: "{{ druid_conf_dir }}/coordinator/runtime.properties"
-    regexp: "^druid\\.coordinator\\.balancer\\.strategy=.*"
-    state: present
-    line: druid.coordinator.balancer.strategy=cachingCost
+## Example of removing deprecated config
+# - name: Remove deprecated configuration from Druid config file
+#   lineinfile:
+#     path: "{{ druid_conf_dir }}/_common/common.runtime.properties"
+#     regexp: "^#?druid\\.zk\\.paths\\.indexer\\.leaderLatchPath=.*"
+#     state: absent
 
-- name: Add removal of pending segments to the coordinator config
-  lineinfile:
-    path: "{{ druid_conf_dir }}/coordinator/runtime.properties"
-    regexp: "^druid\\.coordinator\\.kill\\.pendingSegments\\.on=.*"
-    state: present
-    line: druid.coordinator.kill.pendingSegments.on=true
+## Example of new config
+# - name: Add balancer strategy to use for the coordinator
+#   lineinfile:
+#     path: "{{ druid_conf_dir }}/coordinator/runtime.properties"
+#     regexp: "^druid\\.coordinator\\.balancer\\.strategy=.*"
+#     state: present
+#     line: druid.coordinator.balancer.strategy=cachingCost
 
-- name: Rename metrics config settings
-  replace:
-    path: "{{ druid_conf_dir }}/{{ item }}/runtime.properties"
-    regexp: '(.*)com.metamx.(.*)'
-    replace: '\1io.druid.java.util.\2'
-  with_items:
-    - broker
-    - coordinator
-    - historical
-    - indexing
+## Example of renaming config
+# - name: Rename metrics config settings
+#   replace:
+#     path: "{{ druid_conf_dir }}/{{ item }}/runtime.properties"
+#     regexp: '(.*)com.metamx.(.*)'
+#     replace: '\1io.druid.java.util.\2'
+#   with_items:
+#     - broker
+#     - coordinator
+#     - historical
+#     - indexing
 
-- name: Rename metrics config settings
-  replace:
-    path: "{{ druid_conf_dir }}/_common/common.runtime.properties"
-    regexp: '(.*)com.metamx.(.*)'
-    replace: '\1io.druid.java.util.\2'
-
-- name: Create symlink to druid version dir
-  file: src="{{ druid_base_dir }}/druid-{{ druid_upgrade_version }}" dest={{ druid_base_dir }}/druid state=link owner=druid group=druid mode=0775
+## Switch the symbolic link
+# - name: Create symlink to druid version dir
+#   file: src="{{ druid_base_dir }}/druid-{{ druid_upgrade_version }}" dest={{ druid_base_dir }}/druid state=link owner=druid group=druid mode=0775
 
