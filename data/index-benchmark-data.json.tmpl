@@ -1,0 +1,135 @@
+{
+  "type": "index_hadoop",
+  "spec": {
+    "ioConfig": {
+      "type": "hadoop",
+      "inputSpec": {
+        "type": "static",
+        "paths": "s3n://druidbucket/data/lineitem.tbl*4.gz"
+      }
+    },
+    "tuningConfig": {
+      "type": "hadoop",
+      "jobProperties": {
+        "fs.s3.awsAccessKeyId": "<AWS_ACCESS_KEY>",
+        "fs.s3.awsSecretAccessKey": "<AWS_SECRET_KEY>",
+        "fs.s3.impl": "org.apache.hadoop.fs.s3native.NativeS3FileSystem",
+        "fs.s3n.awsAccessKeyId": "<AWS_ACCESS_KEY>",
+        "fs.s3n.awsSecretAccessKey": "<AWS_SECRET_KEY>",
+        "fs.s3n.impl": "org.apache.hadoop.fs.s3native.NativeS3FileSystem",
+        "io.compression.codecs": "org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.DefaultCodec,org.apache.hadoop.io.compress.BZip2Codec,org.apache.hadoop.io.compress.SnappyCodec"
+      }
+    },
+    "dataSchema": {
+      "dataSource": "tpch_lineitem",
+      "parser": {
+        "type": "string",
+        "parseSpec": {
+          "format": "tsv",
+          "delimiter": "|",
+          "columns": [
+            "l_orderkey",
+            "l_partkey",
+            "l_suppkey",
+            "l_linenumber",
+            "l_quantity",
+            "l_extendedprice",
+            "l_discount",
+            "l_tax",
+            "l_returnflag",
+            "l_linestatus",
+            "l_shipdate",
+            "l_commitdate",
+            "l_receiptdate",
+            "l_shipinstruct",
+            "l_shipmode",
+            "l_comment"
+          ],
+          "dimensionsSpec": {
+            "dimensions": [
+              "l_orderkey",
+              "l_partkey",
+              "l_suppkey",
+              "l_linenumber",
+              "l_returnflag",
+              "l_linestatus",
+              "l_shipdate",
+              "l_commitdate",
+              "l_receiptdate",
+              "l_shipinstruct",
+              "l_shipmode",
+              "l_comment"
+            ]
+          },
+          "timestampSpec": {
+            "column": "l_shipdate",
+            "format": "yyyy-MM-dd"
+          }
+        }
+      },
+      "metricsSpec": [{
+          "name": "count",
+          "type": "count"
+        },
+        {
+          "name": "added",
+          "type": "longSum",
+          "fieldName": "added"
+        },
+        {
+          "name": "deleted",
+          "type": "longSum",
+          "fieldName": "deleted"
+        },
+        {
+          "name": "delta",
+          "type": "longSum",
+          "fieldName": "delta"
+        },
+        {
+          "name": "user_unique",
+          "type": "hyperUnique",
+          "fieldName": "user"
+        }
+      ],
+      "granularitySpec": {
+        "type": "uniform",
+        "segmentGranularity": "month",
+        "queryGranularity": "none",
+        "intervals": ["1980/2020"]
+      },
+      "partitionsSpec": {
+        "type": "random",
+        "targetPartitionSize": 5000000
+      },
+      "rollupSpec": {
+        "aggs": [{
+            "type": "count",
+            "name": "count"
+          },
+          {
+            "type": "longSum",
+            "fieldName": "L_QUANTITY",
+            "name": "L_QUANTITY"
+          },
+          {
+            "type": "doubleSum",
+            "fieldName": "L_EXTENDEDPRICE",
+            "name": "L_EXTENDEDPRICE"
+          },
+          {
+            "type": "doubleSum",
+            "fieldName": "L_DISCOUNT",
+            "name": "L_DISCOUNT"
+          },
+          {
+            "type": "doubleSum",
+            "fieldName": "L_TAX",
+            "name": "L_TAX"
+          }
+        ],
+        "rollupGranularity": "day"
+      }
+    }
+  }
+}

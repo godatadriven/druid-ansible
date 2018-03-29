@@ -1,3 +1,11 @@
+- hosts: 127.0.0.1
+  vars_files:
+    - vars/druid.yml
+  tasks:
+    - name: Preflight check AWS_KEYS
+      assert:
+        that: druid_s3_accessKey != '<AWS_ACCESS_KEY>' and druid_s3_secretKey != '<AWS_SECRET_KEY>'
+
 - hosts: tag_postgres_master
   gather_facts: yes
   tasks:

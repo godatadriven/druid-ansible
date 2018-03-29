@@ -1,0 +1,8 @@
+- name: Set config to use double storage
+  lineinfile:
+    path: "{{ druid_conf_dir }}/_common/common.runtime.properties"
+    regexp: "^druid\\.indexing\\.doubleStorage=.*"
+    state: present
+    line: druid.indexing.doubleStorage=double
+
+

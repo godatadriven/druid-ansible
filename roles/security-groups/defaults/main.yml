@@ -1,2 +1,2 @@
 ---
-ip_range: "192.168.1.0/32"
+use_local_public_ip: True
