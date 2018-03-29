@@ -1,0 +1,110 @@
+- name: Check readiness of middlemanager node 
+  uri:
+    url: "http://{{ inventory_hostname }}:8091/status"
+    method: GET
+    return_content: yes
+    status_code: 200
+    headers:
+      Content-Type: "application/json"
+  delegate_to: 127.0.0.1
+  become: no
+  register: node_readiness
+  until: node_readiness.status == 200 and node_readiness.json is defined and node_readiness.json.version is defined
+  retries: 1
+  delay: 5
+
+- name: Check task scheduling is enabled on this middlemanager node 
+  uri:
+    url: "http://{{ inventory_hostname }}:8091/druid/worker/v1/enabled"
+    method: GET
+    return_content: yes
+    status_code: 200
+    headers:
+      Content-Type: "application/json"
+  delegate_to: 127.0.0.1
+  become: no
+  register: node_enabled
+  until: node_enabled.status == 200 and node_enabled.json is defined and (node_enabled.json | json_query('values(@)')|list)[0] == true
+  retries: 1
+  delay: 5
+
+- name: Disable new task scheduling at middlemanager node 
+  uri:
+    url: "http://{{ inventory_hostname }}:8091/druid/worker/v1/disable"
+    method: POST
+    return_content: yes
+    status_code: 200
+    headers:
+      Content-Type: "application/json"
+  delegate_to: 127.0.0.1
+  become: no
+  register: node_readiness
+  until: node_readiness.status == 200 and node_readiness.json is defined and (node_readiness.json | json_query('values(@)')|list)[0] == "disabled"
+  retries: 1
+  delay: 5
+
+- name: Check task scheduling is disabled now on this middlemanager node 
+  uri:
+    url: "http://{{ inventory_hostname }}:8091/druid/worker/v1/enabled"
+    method: GET
+    return_content: yes
+    status_code: 200
+    headers:
+      Content-Type: "application/json"
+  delegate_to: 127.0.0.1
+  become: no
+  register: node_enabled
+  until: node_enabled.status == 200 and node_enabled.json is defined and (node_enabled.json | json_query('values(@)')|list)[0] == false
+  retries: 120
+  delay: 5
+
+
+- name: Check currently running tasks on this middlemanager node 
+  uri:
+    url: "http://{{ inventory_hostname }}:8091/druid/worker/v1/tasks"
+    method: GET
+    return_content: yes
+    status_code: 200
+    headers:
+      Content-Type: "application/json"
+  delegate_to: 127.0.0.1
+  become: no
+  register: node_enabled
+  until: node_enabled.status == 200 and node_enabled.json is defined and node_enabled.json | length == 0
+  retries: 120
+  delay: 5
+
+- name: Restart the middlemanager
+  supervisorctl:
+    name: middleManager
+    state: restarted
+
+- name: Check readiness of middlemanager node 
+  uri:
+    url: "http://{{ inventory_hostname }}:8091/status"
+    method: GET
+    return_content: yes
+    status_code: 200
+    headers:
+      Content-Type: "application/json"
+  delegate_to: 127.0.0.1
+  become: no
+  register: node_readiness
+  until: node_readiness.status == 200 and node_readiness.json is defined and node_readiness.json.version is defined
+  retries: 120
+  delay: 5
+
+- name: Check task scheduling is enabled again on this middlemanager node 
+  uri:
+    url: "http://{{ inventory_hostname }}:8091/druid/worker/v1/enabled"
+    method: GET
+    return_content: yes
+    status_code: 200
+    headers:
+      Content-Type: "application/json"
+  delegate_to: 127.0.0.1
+  become: no
+  register: node_enabled
+  until: node_enabled.status == 200 and node_enabled.json is defined and (node_enabled.json | json_query('values(@)')|list)[0] == true
+  retries: 120
+  delay: 5

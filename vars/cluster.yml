@@ -9,7 +9,7 @@ node_volumes:
     delete_on_termination: true
 
 instance_type: t2.2xlarge
-node_count_zone_a: 10
+node_count_zone_a: 12 #1 master, 1 metrics, 1 broker, 1 coordinator, 1 middlemanager + historical, 7 historical
 node_count_zone_b: 0
 node_count_zone_c: 0
 

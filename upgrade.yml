@@ -1,0 +1,75 @@
+---
+# http://druid.io/docs/latest/operations/rolling-updates.html
+# Recommended upgrade order:
+#  1. Historical
+#  2. Overlord (if any)
+#  3. Middle Manager (if any)
+#  4. Standalone Real-time (if any)
+#  5. Broker
+#  6. Coordinator ( or merged Coordinator+Overlord )
+
+- hosts: tag_druid_historical
+  serial: 1
+  vars_files:
+    - vars/druid.yml
+    - vars/upgrade.yml
+  become: yes
+  tasks:
+
+    - import_tasks: upgrade/tasks/upgrade-druid.yml
+
+    - import_tasks: upgrade/tasks/restart-historical.yml
+
+    - name: Debug node readiness right after restart
+      debug: var=node_readiness
+
+- hosts: tag_druid_middlemanager
+  vars_files:
+    - vars/druid.yml
+    - vars/upgrade.yml
+  become: yes
+  tasks:
+
+    - import_tasks: upgrade/tasks/upgrade-druid.yml
+
+    - import_tasks: upgrade/tasks/restart-historical.yml
+
+    - name: Debug node readiness right after restart
+      debug: var=node_readiness
+
+    - import_tasks: upgrade/tasks/restart-middlemanager.yml
+
+    - name: Debug node readiness right after restart
+      debug: var=node_readiness
+
+- hosts: tag_druid_broker
+  vars_files:
+    - vars/druid.yml
+    - vars/upgrade.yml
+  become: yes
+  tasks:
+
+    - import_tasks: upgrade/tasks/upgrade-druid.yml
+
+    - import_tasks: upgrade/tasks/restart-broker.yml
+
+    - name: Debug node readiness right after restart
+      debug: var=node_readiness
+
+- hosts: tag_druid_coordinator
+  vars_files:
+    - vars/druid.yml
+    - vars/upgrade.yml
+  become: yes
+  tasks:
+
+    - import_tasks: upgrade/tasks/upgrade-druid.yml
+
+    - import_tasks: upgrade/tasks/restart-coordinator.yml
+
+    - name: Debug node readiness right after restart
+      debug: var=node_readiness
+
+
+# FINAL STEPS AFTER FULL UPGRADE
+#ADD - common.properties set druid.indexing.doubleStorage=double

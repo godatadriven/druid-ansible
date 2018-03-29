@@ -1,0 +1,34 @@
+- name: Check readiness of historical node 
+  uri:
+    url: "http://{{ inventory_hostname }}:8083/druid/historical/v1/loadstatus"
+    method: GET
+    return_content: yes
+    status_code: 200
+    headers:
+      Content-Type: "application/json"
+  delegate_to: 127.0.0.1
+  become: no
+  register: node_readiness
+  until: node_readiness.status == 200 and node_readiness.json is defined and node_readiness.json.cacheInitialized
+  retries: 1
+  delay: 5
+
+- name: Restart the historical
+  supervisorctl:
+    name: historical
+    state: restarted
+
+- name: Check readiness of historical node 
+  uri:
+    url: "http://{{ inventory_hostname }}:8083/druid/historical/v1/loadstatus"
+    method: GET
+    return_content: yes
+    status_code: 200
+    headers:
+      Content-Type: "application/json"
+  delegate_to: 127.0.0.1
+  become: no
+  register: node_readiness
+  until: node_readiness.status == 200 and node_readiness.json is defined and node_readiness.json.cacheInitialized
+  retries: 120
+  delay: 5

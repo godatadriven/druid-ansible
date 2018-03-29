@@ -1,0 +1,70 @@
+---
+# From the druid 0.11.0 release notes:
+
+# Migrating to Double columns
+# Prior to 0.11.0, the Double* aggregators would store column values on disk as Float while performing aggregations using Double representations.
+
+# PR #4491 allows the Double aggregators to store column values on disk as Doubles. Due to concerns related to rolling updates and version downgrades, this behavior is disabled by default and Druid will continue to store Double aggregators on disk as floats.
+
+# To enable Double column storage, set the following property in the common runtime properties:
+
+# druid.indexing.doubleStorage=double
+# Users should not set this property during an initial rolling upgrade to 0.11.0, as any nodes running pre-0.11.0 Druid will not be able to handle Double columns created during the upgrade period. Users will also need to reindex any segments with Double columns if downgrading from 0.11.0 to an older version. Please see #4944 and #4605 for more information.
+
+- hosts: tag_druid_historical
+  serial: 1
+  vars_files:
+    - vars/druid.yml
+  become: yes
+  tasks:
+
+    - import_tasks: upgrade/tasks/upgrade-double-storage.yml
+
+    - import_tasks: upgrade/tasks/restart-historical.yml
+
+    - name: Debug node readiness right after restart
+      debug: var=node_readiness
+
+- hosts: tag_druid_middlemanager
+  vars_files:
+    - vars/druid.yml
+  become: yes
+  tasks:
+
+    - import_tasks: upgrade/tasks/upgrade-double-storage.yml
+
+    - import_tasks: upgrade/tasks/restart-historical.yml
+
+    - name: Debug node readiness right after restart
+      debug: var=node_readiness
+
+    - import_tasks: upgrade/tasks/restart-middlemanager.yml
+
+    - name: Debug node readiness right after restart
+      debug: var=node_readiness
+
+- hosts: tag_druid_broker
+  vars_files:
+    - vars/druid.yml
+  become: yes
+  tasks:
+
+    - import_tasks: upgrade/tasks/upgrade-double-storage.yml
+
+    - import_tasks: upgrade/tasks/restart-broker.yml
+
+    - name: Debug node readiness right after restart
+      debug: var=node_readiness
+
+- hosts: tag_druid_coordinator
+  vars_files:
+    - vars/druid.yml
+  become: yes
+  tasks:
+
+    - import_tasks: upgrade/tasks/upgrade-double-storage.yml
+
+    - import_tasks: upgrade/tasks/restart-coordinator.yml
+
+    - name: Debug node readiness right after restart
+      debug: var=node_readiness

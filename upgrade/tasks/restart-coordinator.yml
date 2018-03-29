@@ -1,0 +1,34 @@
+- name: Check readiness of coordinator node 
+  uri:
+    url: "http://{{ inventory_hostname }}:8081/druid/coordinator/v1/loadstatus"
+    method: GET
+    return_content: yes
+    status_code: 200
+    headers:
+      Content-Type: "application/json"
+  delegate_to: 127.0.0.1
+  become: no
+  register: node_readiness
+  until: node_readiness.status == 200 and node_readiness.json is defined and (node_readiness.json | json_query('values(@)')|list|unique|length > 0) and (node_readiness.json | json_query('values(@)')|list|unique)[0] == 100.0
+  retries: 1
+  delay: 5
+
+- name: Restart the coordinator
+  supervisorctl:
+    name: coordinator
+    state: restarted
+
+- name: Check readiness of coordinator node 
+  uri:
+    url: "http://{{ inventory_hostname }}:8081/druid/coordinator/v1/loadstatus"
+    method: GET
+    return_content: yes
+    status_code: 200
+    headers:
+      Content-Type: "application/json"
+  delegate_to: 127.0.0.1
+  become: no
+  register: node_readiness
+  until: node_readiness.status == 200 and node_readiness.json is defined and (node_readiness.json | json_query('values(@)')|list|unique|length > 0) and (node_readiness.json | json_query('values(@)')|list|unique)[0] == 100.0
+  retries: 120
+  delay: 5
