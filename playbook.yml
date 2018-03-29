@@ -42,9 +42,9 @@
             enabled = true
             database = "druid"
             templates = [
-              "*.*.*.*.*.* .service.hostname.dim1.dim2.measurement*",
-              "*.*.*.*.* .service.hostname.dim1.measurement*",
-              "*.*.*.* .service.hostname.measurement*"
+              "*.*.*.*.*.* env.service.hostname.dim1.dim2.measurement*",
+              "*.*.*.*.* env.service.hostname.dim1.measurement*",
+              "*.*.*.* env.service.hostname.measurement*"
             ]
       notify:
         - restart influxdb
